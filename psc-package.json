@@ -1,0 +1,25 @@
+{
+    "name": "hyper",
+    "set": "erl-0.10.5",
+    "source": "https://github.com/purerl/package-sets.git",
+    "depends": [
+        "erl-cowboy",
+        "integers",
+        "globals",
+        "transformers",
+        "strings",
+        "smolder",
+        "proxy",
+        "prelude",
+        "media-types",
+        "maps",
+        "indexed-monad",
+        "http-methods",
+        "generics-rep",
+        "generics",
+        "foldable-traversable",
+        "eff",
+        "control",
+        "arrays"
+    ]
+}
