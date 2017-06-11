@@ -1,23 +1,40 @@
 module Hyper.Erl.Server where
 
 import Prelude
-import Control.IxMonad (ipure)
+import Control.IxMonad (ipure, (:*>), (:>>=))
 import Control.Monad.Eff (Eff)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
 import Data.Tuple (Tuple(..))
 import Erl.Atom (Atom, atom)
 import Erl.Cowboy (EnvValue, PROCESS, ProtoOpt(..), TransOpt(..), startHttp, toEnvValue)
-import Erl.Cowboy.Req (Req, StatusCode(..), replyStatus, setBody, setHeader)
+import Erl.Cowboy.Req (Req, StatusCode(..), replyStatus, setBody, setHeader, path, method)
 import Erl.Data.List (nil, (:))
 import Erl.Data.Tuple (Tuple2, Tuple4, tuple2, tuple4)
 import Hyper.Conn (Conn)
 import Hyper.Middleware (Middleware, evalMiddleware)
-import Hyper.Middleware.Class (modifyConn)
+import Hyper.Middleware.Class (getConn, modifyConn)
 import Hyper.Response (class Response, class ResponseWritable, ResponseEnded, StatusLineOpen)
+import Hyper.Request (class Request, RequestData)
+import Data.HTTP.Method (fromString)
+import Data.StrMap (empty)
 
-data HttpRequest = HttpRequest
+data HttpRequest = HttpRequest RequestData
 data HttpResponse a = HttpResponse Req (Maybe StatusCode)
+
+mkHttpRequest :: Req -> HttpRequest
+mkHttpRequest req = HttpRequest { url, contentLength, headers, method: method' }
+  where
+  contentLength = Nothing
+  url = path req
+  method' = fromString (method req)
+  headers = empty
+
+instance requestHttpRequest :: Monad m => Request HttpRequest m where
+  getRequestData = do
+    getConn :>>=
+    case _ of
+      { request: HttpRequest d } -> ipure d
 
 type ServerOptions = {
   port :: Int,
@@ -86,7 +103,8 @@ runServer { port, ip } components middleware = do
   where
     middlewareFn :: Req → Eff (process :: PROCESS | e) Req
     middlewareFn req = do
-      let conn = { request: HttpRequest
+
+      let conn = { request: mkHttpRequest req
                  , response: HttpResponse req Nothing
                  , components: components
                  }
