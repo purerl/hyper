@@ -8,8 +8,7 @@
 module Examples.AuthenticationAndAuthorization where
 
 import Prelude
-import Hyper.Node.BasicAuth as BasicAuth
-import Text.Smolder.HTML.Attributes as A
+
 import Control.IxMonad ((:>>=), (:*>))
 import Control.Monad.Aff.AVar (AVAR)
 import Control.Monad.Aff.Class (class MonadAff)
@@ -25,13 +24,15 @@ import Hyper.Authorization (authorized)
 import Hyper.Conn (Conn)
 import Hyper.Middleware (Middleware)
 import Hyper.Middleware.Class (getConn)
-import Hyper.Node.Server (defaultOptions, runServer)
+import Hyper.Node.BasicAuth as BasicAuth
+import Hyper.Node.Server (defaultOptionsWithLogging, runServer)
 import Hyper.Request (class Request, getRequestData)
 import Hyper.Response (class Response, class ResponseWritable, ResponseEnded, StatusLineOpen, closeHeaders, contentType, respond, writeStatus)
 import Hyper.Status (Status, statusNotFound, statusOK)
 import Node.Buffer (BUFFER)
 import Node.HTTP (HTTP)
 import Text.Smolder.HTML (a, h1, li, p, section, ul)
+import Text.Smolder.HTML.Attributes as A
 import Text.Smolder.Markup (Markup, text, (!))
 import Text.Smolder.Renderer.String (render)
 
@@ -39,10 +40,9 @@ import Text.Smolder.Renderer.String (render)
 -- Helper for responding with HTML.
 htmlWithStatus
   :: forall m req res b c
-   . ( Monad m
-     , Response res m b
-     , ResponseWritable b m String
-     )
+  .  Monad m
+  => Response res m b
+  => ResponseWritable b m String
   => Status
   -> Markup Unit
   -> Middleware
@@ -73,10 +73,9 @@ data Admin = Admin
 -- name if the user _is_ authenticated.
 profileHandler
   :: forall m req res b c
-   . ( Monad m
-     , Response res m b
-     , ResponseWritable b m String
-     )
+  .  Monad m
+  => Response res m b
+  => ResponseWritable b m String
   => Middleware
      m
      (Conn req (res StatusLineOpen) { authentication :: Maybe User | c })
@@ -108,10 +107,9 @@ profileHandler =
 -- as seen below.
 adminHandler
   :: forall m req res b c
-   . ( Monad m
-     , Response res m b
-     , ResponseWritable b m String
-     )
+  .  Monad m
+  => Response res m b
+  => ResponseWritable b m String
   => Middleware
      m
      (Conn req (res StatusLineOpen) { authorization :: Admin, authentication :: User | c })
@@ -158,11 +156,10 @@ getAdminRole conn =
 
 
 app :: forall m e req res b c
-     . ( MonadAff (buffer :: BUFFER | e) m
-       , Request req m
-       , Response res m b
-       , ResponseWritable b m String
-       )
+    .  MonadAff (buffer :: BUFFER | e) m
+    => Request req m
+    => Response res m b
+    => ResponseWritable b m String
     => Middleware
        m
        (Conn req
@@ -207,10 +204,10 @@ app = BasicAuth.withAuthentication userFromBasicAuth :>>= \_ → router
           _, _ ->
             notFound
 
-main :: forall e. Eff (http :: HTTP, console :: CONSOLE, err :: EXCEPTION, avar :: AVAR, buffer :: BUFFER | e) Unit
+main :: forall e. Eff (http :: HTTP, console :: CONSOLE, exception :: EXCEPTION, avar :: AVAR, buffer :: BUFFER | e) Unit
 main =
   let
     components = { authentication: unit
                  , authorization: unit
                  }
-  in runServer defaultOptions components app
+  in runServer defaultOptionsWithLogging components app

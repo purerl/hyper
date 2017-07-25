@@ -1,5 +1,21 @@
 # Changelog
 
+* 0.8.0
+  - Add `MonadAff` instance for `Middleware`
+  - Add Buffer instance for `ReadableBody`
+  - Add `Readable ()` instance for `StreamableBody`, a new type class for
+    streaming the request body, instead of reading the complete body as a
+    value.
+* 0.7.3
+  - Link to external packages in extensions docs
+* 0.7.2
+  - Improve docs template, and index mobile support
+* 0.7.1
+  - Deploy documentation for each tagged release
+  - HTTPS for documentation site
+  - No built docs in git repository
+* 0.7.0
+  - PureScript 0.11.x compatibility (breaking changes!)
 * 0.6.0
   - Include early support for cookies and sessions
   - Add docs for new type-level routing API featuring the `Resource` construct
